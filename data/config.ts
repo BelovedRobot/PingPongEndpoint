@@ -18,3 +18,10 @@ export var blobFileContainer = 'hunt-log-app'; // Prod
 export var iapSharedSecret : String = "d701b8ddde4c452380e1b4cea96672de";
 export var iapValidationEndpoint : String = "https://sandbox.itunes.apple.com/verifyReceipt";
 // export var iapValidationEndpoint : String = "https://buy.itunes.apple.com/verifyReceipt";
+
+// Configure Cryptography
+export var cryptoKey = "53a738e847f63b92";
+export var cryptoIv = "3ac8fd8cb2a87e56";
+
+// Configure SendGrid
+export var sendGridKey = "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";

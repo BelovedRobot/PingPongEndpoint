@@ -1,6 +1,8 @@
 var express = require('express');
 var documentClient = require('documentdb').DocumentClient;
 var config = require('../data/config');
+var documentDB = require('../data/documentDB');
+import _ = require("lodash");
 
 // Function getClient
 export function getClient() {
@@ -94,5 +96,24 @@ export function deleteDocument(documentId, callback) {
     client.deleteDocument(docLink, function(err, results) {
         if(err) return callback(err);
         return callback(null, null);
+    });
+}
+
+// Function queryDatabase
+export function queryDatabase(querySpec) : Promise<any> {
+    var client = documentDB.getClient();
+    var uri = documentDB.getCollectionUri();
+
+    return new Promise<any>((resolve, reject) => {
+        client.queryDocuments(uri, querySpec).toArray(function (err, results) {
+            if (err || _.isUndefined(results)) {
+                return reject(err);
+            }
+            if (results.length > 0) {
+                resolve(results);
+            } else {
+                resolve([]);
+            }
+        });
     });
 }

@@ -54,8 +54,20 @@ router.use(function (req, res, next) {
     next(); // make sure we go to the next routes and don't stop here
 });
 
+var authFreeRoutes = [
+];
+
 // Optional to add a piece of middleware to use for all requests
 router.use(function(req, res, next) {
+    // Skip authentication middle-ware for certain routes
+    var exceptionIndex = _.findIndex(authFreeRoutes, function(route) {
+        return _.startsWith(req.originalUrl, route);
+    });
+    if (exceptionIndex > -1) {
+        next();
+        return;
+    }
+    
     // Crude authentication, the token must match
     if (_.has(req.headers, 'authorization')) {
         var tokenString = req.headers['authorization'];

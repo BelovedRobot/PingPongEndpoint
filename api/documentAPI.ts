@@ -47,6 +47,41 @@ router.get('/document/type/:documentType', function(req, res) {
     });
 });
 
+// POST ../api/document/query
+router.post('/document/query', function(req, res) {
+    // The parameters field is required
+    if (!_.has(req.body, 'parameters') || _.isNull(req.body.parameters) || !_.isArray(req.body.parameters)) {
+        return res.status(400).json({ error : "documents cannot be queried. you must provide parameters."});
+    }
+    /*
+        parameters : [{
+            'property' : 'docType',
+            'value' : 'user',
+        }]
+    */
+    var params = req.body.parameters;
+    var paramString = '';
+    for (var i = 0; i < params.length; i++) {
+        var param = params[i];
+        paramString += ` d.${param.property} = '${param.value}'`;
+        if (i < (params.length - 1)) {
+            paramString += ' AND'
+        }
+    }
+
+    var querySpec = {
+        query : `SELECT * FROM docs d WHERE ${paramString}`,
+        options : []
+    };
+
+    documentDB.queryDatabase(querySpec).then(results => {
+        return res.status(200).json(results);
+    }).catch(error => {
+        console.log("Error processing query. " + error);
+        return res.status(400).json({ error : "There was a problem with your request."});
+    });
+});
+
 // POST ../api/document
 router.post('/document', function(req, res) {
     // Validate the model
