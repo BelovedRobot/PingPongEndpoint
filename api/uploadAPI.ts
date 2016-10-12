@@ -69,8 +69,14 @@ router.post('/app/upload', uploads.single('file'), function(req, res) {
                 // } else {
                 //     target[targetDoc.targetProperty] = blobUrl;
                 // }
-                target[targetDoc.targetProperty] = blobUrl;
 
+                // Check for sub-property
+                if (targetDoc.subTargetProperty != "") {
+                    target[targetDoc.targetProperty][targetDoc.subTargetProperty] = blobUrl;
+                } else {
+                    target[targetDoc.targetProperty] = blobUrl;
+                }
+                
                 // Update the document
                 documentDB.updateDocument(target, function(err, updated) {
                     if (updated != null && updated.id != null && err == null) {

@@ -4,10 +4,13 @@ var documentDB = require('../data/documentDB');
 var config = require('../data/config');
 import _ = require('lodash');
 import crypto = require("crypto");
+import fs = require('fs');
+var sendGridHelper = require('sendgrid').mail;
+var moment = require('moment-timezone');
+require("moment-duration-format");
 
-
-// GET ../api/auth
-router.post('/auth', function(req, res) {
+// POST ../api/auth
+router.post('/auth', function (req, res) {
     if (!_.has(req.body, 'cipher') || _.isNull(req.body.cipher)) {
         res.status(400).json({ error: "authentication failed, something happened." });
         return;
@@ -153,6 +156,148 @@ router.post('/auth/new', function (req, res) {
 });
 
 
+// POST ../api/auth/update
+router.post('/auth/update', function (req, res) {
+    if (!_.has(req.body, 'cipher') || _.isNull(req.body.cipher)) {
+        res.status(400).json({ error: "authentication failed, something happened." });
+        return;
+    }
+
+    var key = config.cryptoKey;
+    var iv = config.cryptoIv;
+
+    // Decipher the body
+    const decipher = crypto.createDecipheriv('aes-128-cbc', key, iv);
+    var decrypted = decipher.update(req.body.cipher, 'base64', 'utf8');
+    decrypted += decipher.final('utf8');
+
+    // Split the parts
+    var splitString = decrypted.split('~')
+    var email = splitString[0]
+    var sentPassword = splitString[1]
+    var newPassword = splitString[2];
+
+    // Get the password hash
+    var passwordHash = "";
+    hashString(sentPassword, function (resultHash) {
+        passwordHash = resultHash;
+    });
+    if (passwordHash === "") {
+        return res.status(400).json({ error: "Something happened." });
+    }
+
+    // Get the user from the DB
+    var querySpec = {
+        query: "SELECT * FROM c WHERE c.docType = 'hunter' AND c.email = '" + email + "'",
+        parameters: []
+    };
+
+    var client = documentDB.getClient();
+    var uri = documentDB.getCollectionUri();
+
+    client.queryDocuments(uri, querySpec).toArray(function (err, results) {
+        if (err) {
+            res.status(400).json({ error: "Failed to retrieve user" });
+            return;
+        }
+        if (results.length > 0) {
+            var email = results[0].email
+            var password = results[0].password
+
+            // Make sure the passwords match
+            if (passwordHash == password) {
+                // The passwords match so we can update the password
+                // Get the new password hash
+                var newPasswordHash = "";
+                hashString(newPassword, function (resultHash) {
+                    newPasswordHash = resultHash;
+                });
+                if (newPasswordHash === "") {
+                    return res.status(400).json({ error: "Password is not compatible" });
+                }
+
+                // Update the user, then return 200
+                let hunter = results[0];
+                hunter.password = newPasswordHash;
+                documentDB.updateDocument(hunter, function (updateErr, result) {
+                    if (updateErr) {
+                        return res.status(400).json({ error: "Could not update the user" });
+                    }
+                    return res.status(200).json({ message : "Success" });
+                });
+            } else {
+                return res.status(401).json({ error: 'Authentication failure' });
+            }
+        } else {
+            return res.status(401).json({ error: 'Failed to retrieve user' });
+        }
+    });
+});
+
+// POST ../api/auth/reset
+router.post('/auth/reset', function (req, res) {
+    if (!_.has(req.body, 'cipher') || _.isNull(req.body.cipher)) {
+        res.status(400).json({ error: "authentication failed, something happened." });
+        return;
+    }
+
+    var key = config.cryptoKey;
+    var iv = config.cryptoIv;
+
+    // Decipher the body
+    const decipher = crypto.createDecipheriv('aes-128-cbc', key, iv);
+    var decryptedEmail = decipher.update(req.body.cipher, 'base64', 'utf8');
+    decryptedEmail += decipher.final('utf8');
+
+    // Get the user from the DB
+    var querySpec = {
+        query: "SELECT * FROM c WHERE c.docType = 'hunter' AND c.email = '" + decryptedEmail + "'",
+        parameters: []
+    };
+
+    var client = documentDB.getClient();
+    var uri = documentDB.getCollectionUri();
+
+    client.queryDocuments(uri, querySpec).toArray(function (err, results) {
+        if (err) {
+            res.status(400).json({ error: "Failed to retrieve user" });
+            return;
+        }
+        if (results.length > 0) {
+            // Get a new password
+            var uuid = require('node-uuid');
+            var uuid = uuid.v4();
+            var splitString = uuid.split('-');
+            var newPassword = splitString[splitString.length - 1];
+
+            // Get the new password hash
+            var newPasswordHash = "";
+            hashString(newPassword, function (resultHash) {
+                newPasswordHash = resultHash;
+            });
+            if (newPasswordHash === "") {
+                return res.status(400).json({ error: "Password is not compatible" });
+            }
+
+            // Update the user, then return 200
+            let hunter = results[0];
+            hunter.password = newPasswordHash;
+            documentDB.updateDocument(hunter, function (updateErr, result) {
+                if (updateErr) {
+                    return res.status(400).json({ error: "Could not update the user" });
+                }
+                // Send Email
+                sendPasswordResetEmail(decryptedEmail, newPassword).then(result => {
+                    return res.status(200).json({ message : "Success" });
+                }).catch(error => {
+                    return res.status(401).json({ message : "Failed to send confirmation email" });
+                });
+            });
+        } else {
+            return res.status(401).json({ error: 'Failed to retrieve user' });
+        }
+    });
+});
 
 function hashString(value, callback) {
     var hash: any = crypto.createHash("sha256");
@@ -190,4 +335,38 @@ function doesUserExist(emailAddress): Promise<boolean> {
 
 
 
+function sendPasswordResetEmail(emailAddress, newPassword): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
+        // Get the html
+        var htmlResponse = "<%password%>"; // Create blank template just in case
+        fs.readFile('UI/email_passwordReset.html', 'utf8', function (err, data) {
+            if (err) {
+                reject();
+                return;
+            }
+            htmlResponse = data;
+            htmlResponse = htmlResponse.replace('<%password%>', newPassword);
+
+            // Actually Send the Email
+            var from_email = new sendGridHelper.Email('doNotReply@huntlogapp.com');
+            var to_email = new sendGridHelper.Email(emailAddress);
+            var subject = 'HuntLog, Password Reset';
+            var content = new sendGridHelper.Content('text/html', htmlResponse);
+            var mail = new sendGridHelper.Mail(from_email, subject, to_email, content);
+
+            var sg = require('sendgrid')(config.sendGridKey);
+            var request = sg.emptyRequest({
+                method: 'POST',
+                path: '/v3/mail/send',
+                body: mail.toJSON()
+            });
+            sg.API(request, function (error, response) {
+                if (error) {
+                    reject();
+                }
+                resolve(true);
+            });
+        });
+    });
+}
 module.exports = router;

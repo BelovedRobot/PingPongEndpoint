@@ -12,7 +12,8 @@
     "moment-timezone": "^0.5.4",
     "multer": "^1.1.0",
     "request": "^2.74.0",
-    "request-debug": "^0.2.0"
+    "request-debug": "^0.2.0",
+    "sendgrid": "^4.0.1"
   },
   "engine": "node >= 5.7.1",
   "description": "An API to support Hunt Logic's proprietary app."
