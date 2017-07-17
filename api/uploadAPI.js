@@ -6,7 +6,7 @@ var config = require('../data/config');
 var azure = require('azure-storage');
 var multer = require('multer');
 var fs = require('fs');
-const _ = require("lodash");
+var _ = require("lodash");
 var documentDB = require('../data/documentDB');
 var uploads = multer({
     dest: './uploads/'
@@ -47,7 +47,7 @@ router.post('/app/upload', uploads.single('file'), function (req, res) {
             return;
         }
         // Get blob url
-        var blobUrl = `${config.blobEndpoint}${result.name}`;
+        var blobUrl = "" + config.blobEndpoint + result.name;
         // Update the target doc
         documentDB.getDocument(targetDoc.targetId, function (err, results) {
             if (results != null && err == null && _.isArray(results)) {

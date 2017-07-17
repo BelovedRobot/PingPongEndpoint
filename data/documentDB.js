@@ -4,7 +4,7 @@ var express = require('express');
 var documentClient = require('documentdb').DocumentClient;
 var config = require('../data/config');
 var documentDB = require('../data/documentDB');
-const _ = require("lodash");
+var _ = require("lodash");
 // Function getClient
 function getClient() {
     var client = new documentClient(config.endpoint, { 'masterKey': config.authKey });
@@ -77,7 +77,7 @@ function updateDocument(document, callback) {
             callback({ code: 400, body: "Existing document not found." });
         }
         else {
-            let documentUrl = `${uri}/docs/${document.id}`;
+            var documentUrl = uri + "/docs/" + document.id;
             client.replaceDocument(documentUrl, document, function (err, updated) {
                 if (err)
                     return callback(err);
@@ -92,7 +92,7 @@ function deleteDocument(documentId, callback) {
     var client = getClient();
     var uri = getCollectionUri();
     // Create the URL
-    var docLink = `${uri}/docs/${documentId}`;
+    var docLink = uri + "/docs/" + documentId;
     client.deleteDocument(docLink, function (err, results) {
         if (err)
             return callback(err);
@@ -104,7 +104,7 @@ exports.deleteDocument = deleteDocument;
 function queryDatabase(querySpec) {
     var client = documentDB.getClient();
     var uri = documentDB.getCollectionUri();
-    return new Promise((resolve, reject) => {
+    return new Promise(function (resolve, reject) {
         client.queryDocuments(uri, querySpec).toArray(function (err, results) {
             if (err || _.isUndefined(results)) {
                 return reject(err);

@@ -4,7 +4,7 @@ var express = require('express');
 var router = express.Router();
 var documentDB = require('../data/documentDB');
 var config = require('../data/config');
-const _ = require("lodash");
+var _ = require("lodash");
 // GET ../api/document/:documentId
 router.get('/document/:documentId', function (req, res) {
     var documentId = req.params.documentId;
@@ -30,7 +30,7 @@ router.get('/document/type/:documentType', function (req, res) {
     var documentType = req.params.documentType;
     // Get all tickets then parse
     var querySpec = {
-        query: `SELECT * FROM documents d WHERE d.docType = '${documentType}'`,
+        query: "SELECT * FROM documents d WHERE d.docType = '" + documentType + "'",
         parameters: []
     };
     var client = documentDB.getClient();
@@ -63,18 +63,18 @@ router.post('/document/query', function (req, res) {
     var paramString = '';
     for (var i = 0; i < params.length; i++) {
         var param = params[i];
-        paramString += ` d.${param.property} = '${param.value}'`;
+        paramString += " d." + param.property + " = '" + param.value + "'";
         if (i < (params.length - 1)) {
             paramString += ' AND';
         }
     }
     var querySpec = {
-        query: `SELECT * FROM docs d WHERE ${paramString}`,
+        query: "SELECT * FROM docs d WHERE " + paramString,
         options: []
     };
-    documentDB.queryDatabase(querySpec).then(results => {
+    documentDB.queryDatabase(querySpec).then(function (results) {
         return res.status(200).json(results);
-    }).catch(error => {
+    }).catch(function (error) {
         console.log("Error processing query. " + error);
         return res.status(400).json({ error: "There was a problem with your request." });
     });

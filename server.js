@@ -6,7 +6,7 @@ var bodyParser = require('body-parser');
 var authAPI = require('./api/authenticationAPI');
 var uploadAPI = require('./api/uploadAPI');
 var documentAPI = require('./api/documentAPI');
-const _ = require("lodash");
+var _ = require("lodash");
 // Server is the backbone, the AppDelegate if you will. All setup here defines our endpoint 
 // Endpoint Configuration
 // ============================================================================= 

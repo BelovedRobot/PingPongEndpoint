@@ -4,8 +4,8 @@ var express = require('express');
 var router = express.Router();
 var documentDB = require('../data/documentDB');
 var config = require('../data/config');
-const _ = require("lodash");
-const crypto = require("crypto");
+var _ = require("lodash");
+var crypto = require("crypto");
 var sendGridHelper = require('sendgrid').mail;
 var moment = require('moment-timezone');
 require("moment-duration-format");
@@ -18,7 +18,7 @@ router.post('/auth', function (req, res) {
     var key = config.cryptoKey;
     var iv = config.cryptoIv;
     // Decipher the body
-    const decipher = crypto.createDecipheriv('aes-128-cbc', key, iv);
+    var decipher = crypto.createDecipheriv('aes-128-cbc', key, iv);
     var decrypted = decipher.update(req.body.cipher, 'base64', 'utf8');
     decrypted += decipher.final('utf8');
     // Split the parts
@@ -91,7 +91,7 @@ router.post('/auth/new', function (req, res) {
         return;
     }
     // Check if user already exists
-    doesUserExist(req.body.user.email).then(userExists => {
+    doesUserExist(req.body.user.email).then(function (userExists) {
         if (userExists) {
             return res.status(200).json({ response: "The user already exists" });
         }
@@ -99,7 +99,7 @@ router.post('/auth/new', function (req, res) {
         var key = config.cryptoKey;
         var iv = config.cryptoIv;
         // Decipher the body
-        const decipher = crypto.createDecipheriv('aes-128-cbc', key, iv);
+        var decipher = crypto.createDecipheriv('aes-128-cbc', key, iv);
         var decrypted = decipher.update(req.body.cipher, 'base64', 'utf8');
         decrypted += decipher.final('utf8');
         // Now hash the password
@@ -128,7 +128,7 @@ router.post('/auth/new', function (req, res) {
                 return res.status(201).json({ data: user });
             }); */
         });
-    }).catch(error => {
+    }).catch(function (error) {
         return res.status(400).json({ error: "Something happened." });
     });
 });
@@ -141,7 +141,7 @@ router.post('/auth/update', function (req, res) {
     var key = config.cryptoKey;
     var iv = config.cryptoIv;
     // Decipher the body
-    const decipher = crypto.createDecipheriv('aes-128-cbc', key, iv);
+    var decipher = crypto.createDecipheriv('aes-128-cbc', key, iv);
     var decrypted = decipher.update(req.body.cipher, 'base64', 'utf8');
     decrypted += decipher.final('utf8');
     // Split the parts
@@ -184,7 +184,7 @@ router.post('/auth/update', function (req, res) {
                     return res.status(400).json({ error: "Password is not compatible" });
                 }
                 // Update the user, then return 200
-                let user = results[0];
+                var user = results[0];
                 user.password = newPasswordHash;
                 documentDB.updateDocument(user, function (updateErr, result) {
                     if (updateErr) {
@@ -271,7 +271,7 @@ router.post('/auth/hash', function (req, res) {
 // });
 function hashString(value, callback) {
     var hash = crypto.createHash("sha256");
-    hash.on('readable', () => {
+    hash.on('readable', function () {
         var data = hash.read();
         if (data) {
             callback(data.toString('hex'));
@@ -282,11 +282,11 @@ function hashString(value, callback) {
 }
 function doesUserExist(emailAddress) {
     var querySpec = {
-        query: `SELECT * FROM docs d WHERE d.docType = 'user' AND d.email = '${emailAddress}'`,
+        query: "SELECT * FROM docs d WHERE d.docType = 'user' AND d.email = '" + emailAddress + "'",
         options: []
     };
-    return new Promise((resolve, reject) => {
-        documentDB.queryDatabase(querySpec).then(result => {
+    return new Promise(function (resolve, reject) {
+        documentDB.queryDatabase(querySpec).then(function (result) {
             // If there is a result, then the user exists
             if (result.length > 0) {
                 resolve(true);
@@ -294,7 +294,7 @@ function doesUserExist(emailAddress) {
             else {
                 resolve(false);
             }
-        }).catch(error => {
+        }).catch(function (error) {
             console.log(error);
             reject();
         });
