@@ -67,23 +67,21 @@ router.post('/auth', function (req, res) {
     });
 });
 
+// router.get('/auth/email/test', function(req, res) {
+//     var tokenValue = new Buffer(req.query.token, 'base64').toString('utf8');
 
+//     // Split the parts
+//     var splitString = tokenValue.split('~')
+//     var email = splitString[0]
+//     var timestamp = splitString[1]
 
-router.get('/auth/email/test', function(req, res) {
-    var tokenValue = new Buffer(req.query.token, 'base64').toString('utf8');
-
-    // Split the parts
-    var splitString = tokenValue.split('~')
-    var email = splitString[0]
-    var timestamp = splitString[1]
-
-    console.log(email);
-    console.log(timestamp);
-    res.status(200).json({
-        email : email,
-        time : timestamp
-    });
-});
+//     console.log(email);
+//     console.log(timestamp);
+//     res.status(200).json({
+//         email : email,
+//         time : timestamp
+//     });
+// });
 
 router.post('/auth/new', function (req, res) {
     if (!_.has(req.body, 'cipher') || _.isNull(req.body.cipher)) {
@@ -106,7 +104,7 @@ router.post('/auth/new', function (req, res) {
         return;
     }
 
-    // Check if hunter already exists
+    // Check if user already exists
     doesUserExist(req.body.user.email).then(userExists => {
         if (userExists) {
             return res.status(200).json({ response: "The user already exists" });
@@ -130,24 +128,24 @@ router.post('/auth/new', function (req, res) {
             return res.status(400).json({ error: "Something happened." });
         }
 
-        // Set hash as password on hunter
+        // Set hash as password on user
         var user = req.body.user;
         user.password = passwordHash;
 
-        // Save the hunter
+        // Save the user
         documentDB.createDocument(user, function (error, result) {
             if (error) {
                 return res.status(400).json({ error: "Something happened." });
             }
 
             // Send the verification email
-            /* sendVerificationEmail(hunter.email, req).then(result => {
-                // The hunter was saved return successful creation code (201)
-                return res.status(201).json({ data: hunter });
+            /* sendVerificationEmail(user.email, req).then(result => {
+                // The user was saved return successful creation code (201)
+                return res.status(201).json({ data: user });
             }).catch(error => {
                 console.log("There was an error sending to the grid. Error => " + error);
                 // The verification email failed, however that's not a total failure. Go ahead and send success code.
-                return res.status(201).json({ data: hunter });
+                return res.status(201).json({ data: user });
             }); */
         });
     }).catch(error => {
@@ -188,7 +186,7 @@ router.post('/auth/update', function (req, res) {
 
     // Get the user from the DB
     var querySpec = {
-        query: "SELECT * FROM c WHERE c.docType = 'hunter' AND c.email = '" + email + "'",
+        query: "SELECT * FROM c WHERE c.docType = 'user' AND c.email = '" + email + "'",
         parameters: []
     };
 
@@ -217,9 +215,9 @@ router.post('/auth/update', function (req, res) {
                 }
 
                 // Update the user, then return 200
-                let hunter = results[0];
-                hunter.password = newPasswordHash;
-                documentDB.updateDocument(hunter, function (updateErr, result) {
+                let user = results[0];
+                user.password = newPasswordHash;
+                documentDB.updateDocument(user, function (updateErr, result) {
                     if (updateErr) {
                         return res.status(400).json({ error: "Could not update the user" });
                     }
@@ -234,70 +232,82 @@ router.post('/auth/update', function (req, res) {
     });
 });
 
-// POST ../api/auth/reset
-router.post('/auth/reset', function (req, res) {
-    if (!_.has(req.body, 'cipher') || _.isNull(req.body.cipher)) {
-        res.status(400).json({ error: "authentication failed, something happened." });
+// POST ../api/auth/hash
+router.post('/auth/hash', function (req, res) {
+    if (!_.has(req.body, 'value') || _.isNull(req.body.value)) {
+        res.status(400).json({ error: "fail, missing arguments." });
         return;
     }
 
-    var key = config.cryptoKey;
-    var iv = config.cryptoIv;
-
-    // Decipher the body
-    const decipher = crypto.createDecipheriv('aes-128-cbc', key, iv);
-    var decryptedEmail = decipher.update(req.body.cipher, 'base64', 'utf8');
-    decryptedEmail += decipher.final('utf8');
-
-    // Get the user from the DB
-    var querySpec = {
-        query: "SELECT * FROM c WHERE c.docType = 'hunter' AND c.email = '" + decryptedEmail + "'",
-        parameters: []
-    };
-
-    var client = documentDB.getClient();
-    var uri = documentDB.getCollectionUri();
-
-    client.queryDocuments(uri, querySpec).toArray(function (err, results) {
-        if (err) {
-            res.status(400).json({ error: "Failed to retrieve user" });
-            return;
-        }
-        if (results.length > 0) {
-            // Get a new password
-            var uuid = require('node-uuid');
-            var uuid = uuid.v4();
-            var splitString = uuid.split('-');
-            var newPassword = splitString[splitString.length - 1];
-
-            // Get the new password hash
-            var newPasswordHash = "";
-            hashString(newPassword, function (resultHash) {
-                newPasswordHash = resultHash;
-            });
-            if (newPasswordHash === "") {
-                return res.status(400).json({ error: "Password is not compatible" });
-            }
-
-            // Update the user, then return 200
-            let hunter = results[0];
-            hunter.password = newPasswordHash;
-            documentDB.updateDocument(hunter, function (updateErr, result) {
-                if (updateErr) {
-                    return res.status(400).json({ error: "Could not update the user" });
-                }
-                // Send Email
-                sendPasswordResetEmail(decryptedEmail, newPassword).then(result => {
-                    return res.status(200).json({ message : "Success" });
-                }).catch(error => {
-                    return res.status(401).json({ message : "Failed to send confirmation email" });
-                });
-            });
-        } else {
-            return res.status(401).json({ error: 'Failed to retrieve user' });
-        }
+    hashString(req.body.value, function (resultHash) {
+        return res.status(200).json({ value : resultHash });
     });
 });
+
+// POST ../api/auth/reset
+// router.post('/auth/reset', function (req, res) {
+//     if (!_.has(req.body, 'cipher') || _.isNull(req.body.cipher)) {
+//         res.status(400).json({ error: "authentication failed, something happened." });
+//         return;
+//     }
+
+//     var key = config.cryptoKey;
+//     var iv = config.cryptoIv;
+
+//     // Decipher the body
+//     const decipher = crypto.createDecipheriv('aes-128-cbc', key, iv);
+//     var decryptedEmail = decipher.update(req.body.cipher, 'base64', 'utf8');
+//     decryptedEmail += decipher.final('utf8');
+
+//     // Get the user from the DB
+//     var querySpec = {
+//         query: "SELECT * FROM c WHERE c.docType = 'user' AND c.email = '" + decryptedEmail + "'",
+//         parameters: []
+//     };
+
+//     var client = documentDB.getClient();
+//     var uri = documentDB.getCollectionUri();
+
+//     client.queryDocuments(uri, querySpec).toArray(function (err, results) {
+//         if (err) {
+//             res.status(400).json({ error: "Failed to retrieve user" });
+//             return;
+//         }
+//         if (results.length > 0) {
+//             // Get a new password
+//             var uuid = require('node-uuid');
+//             var uuid = uuid.v4();
+//             var splitString = uuid.split('-');
+//             var newPassword = splitString[splitString.length - 1];
+
+//             // Get the new password hash
+//             var newPasswordHash = "";
+//             hashString(newPassword, function (resultHash) {
+//                 newPasswordHash = resultHash;
+//             });
+//             if (newPasswordHash === "") {
+//                 return res.status(400).json({ error: "Password is not compatible" });
+//             }
+
+//             // Update the user, then return 200
+//             let user = results[0];
+//             user.password = newPasswordHash;
+//             documentDB.updateDocument(user, function (updateErr, result) {
+//                 if (updateErr) {
+//                     return res.status(400).json({ error: "Could not update the user" });
+//                 }
+//                 // Send Email
+//                 sendPasswordResetEmail(decryptedEmail, newPassword).then(result => {
+//                     return res.status(200).json({ message : "Success" });
+//                 }).catch(error => {
+//                     return res.status(401).json({ message : "Failed to send confirmation email" });
+//                 });
+//             });
+//         } else {
+//             return res.status(401).json({ error: 'Failed to retrieve user' });
+//         }
+//     });
+// });
 
 function hashString(value, callback) {
     var hash: any = crypto.createHash("sha256");
@@ -333,40 +343,39 @@ function doesUserExist(emailAddress): Promise<boolean> {
     });
 }
 
+// function sendPasswordResetEmail(emailAddress, newPassword): Promise<boolean> {
+//     return new Promise<boolean>((resolve, reject) => {
+//         // Get the html
+//         var htmlResponse = "<%password%>"; // Create blank template just in case
+//         fs.readFile('UI/email_passwordReset.html', 'utf8', function (err, data) {
+//             if (err) {
+//                 reject();
+//                 return;
+//             }
+//             htmlResponse = data;
+//             htmlResponse = htmlResponse.replace('<%password%>', newPassword);
 
+//             // Actually Send the Email
+//             var from_email = new sendGridHelper.Email('doNotReply@huntlogapp.com');
+//             var to_email = new sendGridHelper.Email(emailAddress);
+//             var subject = 'HuntLog, Password Reset';
+//             var content = new sendGridHelper.Content('text/html', htmlResponse);
+//             var mail = new sendGridHelper.Mail(from_email, subject, to_email, content);
 
-function sendPasswordResetEmail(emailAddress, newPassword): Promise<boolean> {
-    return new Promise<boolean>((resolve, reject) => {
-        // Get the html
-        var htmlResponse = "<%password%>"; // Create blank template just in case
-        fs.readFile('UI/email_passwordReset.html', 'utf8', function (err, data) {
-            if (err) {
-                reject();
-                return;
-            }
-            htmlResponse = data;
-            htmlResponse = htmlResponse.replace('<%password%>', newPassword);
+//             var sg = require('sendgrid')(config.sendGridKey);
+//             var request = sg.emptyRequest({
+//                 method: 'POST',
+//                 path: '/v3/mail/send',
+//                 body: mail.toJSON()
+//             });
+//             sg.API(request, function (error, response) {
+//                 if (error) {
+//                     reject();
+//                 }
+//                 resolve(true);
+//             });
+//         });
+//     });
+// }
 
-            // Actually Send the Email
-            var from_email = new sendGridHelper.Email('doNotReply@huntlogapp.com');
-            var to_email = new sendGridHelper.Email(emailAddress);
-            var subject = 'HuntLog, Password Reset';
-            var content = new sendGridHelper.Content('text/html', htmlResponse);
-            var mail = new sendGridHelper.Mail(from_email, subject, to_email, content);
-
-            var sg = require('sendgrid')(config.sendGridKey);
-            var request = sg.emptyRequest({
-                method: 'POST',
-                path: '/v3/mail/send',
-                body: mail.toJSON()
-            });
-            sg.API(request, function (error, response) {
-                if (error) {
-                    reject();
-                }
-                resolve(true);
-            });
-        });
-    });
-}
 module.exports = router;

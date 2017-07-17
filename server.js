@@ -1,17 +1,17 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var express = require('express'); // call express
 var app = express(); // define our app using express
 var bodyParser = require('body-parser');
 var authAPI = require('./api/authenticationAPI');
 var uploadAPI = require('./api/uploadAPI');
 var documentAPI = require('./api/documentAPI');
-var receiptAPI = require('./api/receiptAPI');
 const _ = require("lodash");
 // Server is the backbone, the AppDelegate if you will. All setup here defines our endpoint 
 // Endpoint Configuration
 // ============================================================================= 
 // Set our port
-var port = process.env.PORT || 8484;
+var port = process.env.PORT || 8787;
 // Configure bodyParser for getting data from a POST
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -22,7 +22,7 @@ var router = express.Router();
 app.use('/api', router);
 // Configure a test route to make sure everything is working (accessed at GET http://localhost:8484/api)
 router.get('/', function (req, res) {
-    res.status(200).send('Hello HuntLog');
+    res.status(200).send('Hello API');
 });
 // Add CORS Support
 router.use(function (req, res, next) {
@@ -64,7 +64,7 @@ router.use(function (req, res, next) {
         // Get Token
         var prefixLength = tokenPrefix.length;
         var token = tokenString.substring(tokenPrefix.length);
-        if (!_.isEqual(token, "1726C525-DD97-4DB3-BACE-BB30E9745E46")) {
+        if (!_.isEqual(token, "26ae611f-b20d-4c38-8ed6-a9f1b650641c")) {
             isAuthorized = false;
         }
         if (!isAuthorized) {
@@ -83,7 +83,6 @@ router.use(function (req, res, next) {
 app.use('/api', uploadAPI);
 app.use('/api', authAPI);
 app.use('/api', documentAPI);
-app.use('/api', receiptAPI);
 // Start the Server
 // =============================================================================
 app.listen(port);

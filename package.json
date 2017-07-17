@@ -1,6 +1,13 @@
 {
-  "name": "hung-log-node-api",
+  "name": "focused-driver-api",
   "main": "server.js",
+  "scripts": {
+    "start-dev": "tsc && concurrently \"tsc -w\" \"node server.js\" ",
+    "lite": "lite-server",
+    "postinstall": "tsc",
+    "tsc": "tsc",
+    "tsc:w": "tsc -w"
+  },
   "dependencies": {
     "azure-storage": "^1.0.1",
     "body-parser": "^1.15.1",
@@ -16,5 +23,5 @@
     "sendgrid": "^4.0.1"
   },
   "engine": "node >= 5.7.1",
-  "description": "An API to support Hunt Logic's proprietary app."
+  "description": "An API to support Focused Driver's proprietary app."
 }
