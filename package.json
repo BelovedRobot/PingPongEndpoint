@@ -9,7 +9,6 @@
     "tsc:w": "tsc -w"
   },
   "dependencies": {
-    "typescript": "^2.4.1",
     "@types/core-js": "^0.9.39",
     "@types/jasmine": "^2.5.37",
     "@types/jquery": "^2.0.33",
