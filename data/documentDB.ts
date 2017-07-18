@@ -1,30 +1,30 @@
-var express = require('express');
-var documentClient = require('documentdb').DocumentClient;
-var config = require('../data/config');
-var documentDB = require('../data/documentDB');
-import _ = require("lodash");
+let express = require('express');
+const documentClient = require('documentdb').DocumentClient;
+const config = require('../data/config');
+const documentDB = require('../data/documentDB');
+const _ = require("lodash");
 
 // Function getClient
 export function getClient() {
-    var client = new documentClient(config.endpoint, {'masterKey': config.authKey});
+    const client = new documentClient(config.endpoint, {'masterKey': config.authKey});
     return client;
 }
 
 // Function getCollectionUri
 export function getCollectionUri() {
-    var collectionUri = 'dbs/' + config.dbDefinition + '/colls/' + config.collectionDefinition;
+    const collectionUri = 'dbs/' + config.dbDefinition + '/colls/' + config.collectionDefinition;
     return collectionUri;
 }
 
 // Function getDocument
 export function getDocument(documentId, callback) {
-    var querySpec = {
+    const querySpec = {
         query: 'SELECT * FROM root r WHERE r.id=@id',
-        parameters: [{ name: '@id', value: documentId }]
+        parameters: [{name: '@id', value: documentId}]
     };
     
-    var client = getClient();
-    var uri = getCollectionUri();
+    const client = getClient();
+    const uri = getCollectionUri();
     
     client.queryDocuments(uri, querySpec).toArray(function(err, results) {
         if(err) return callback(err);
@@ -39,13 +39,13 @@ export function getDocument(documentId, callback) {
 
 // Function createDocument
 export function createDocument(document, callback) {
-    var querySpec = {
+    const querySpec = {
         query: 'SELECT * FROM root r WHERE r.id=@id',
-        parameters: [{ name: '@id', value: document.id }]
+        parameters: [{name: '@id', value: document.id}]
     };
     
-    var client = getClient();
-    var uri = getCollectionUri();
+    const client = getClient();
+    const uri = getCollectionUri();
 
     client.queryDocuments(uri, querySpec).toArray(function(err, results) {
         if(err) return callback(err);
@@ -62,13 +62,13 @@ export function createDocument(document, callback) {
 
 // Function updateDocument
 export function updateDocument(document, callback) {
-    var querySpec = {
+    const querySpec = {
         query: 'SELECT * FROM root r WHERE r.id=@id',
-        parameters: [{ name: '@id', value: document.id }]
+        parameters: [{name: '@id', value: document.id}]
     };
 
-    var client = getClient();
-    var uri = getCollectionUri();
+    const client = getClient();
+    const uri = getCollectionUri();
     
     client.queryDocuments(uri, querySpec).toArray(function(err, results) {
         if(err) return callback(err);    
@@ -87,11 +87,11 @@ export function updateDocument(document, callback) {
 
 // Function deleteDocument
 export function deleteDocument(documentId, callback) {
-    var client = getClient();
-    var uri = getCollectionUri();
+    const client = getClient();
+    const uri = getCollectionUri();
 
     // Create the URL
-    var docLink = `${uri}/docs/${documentId}`;
+    const docLink = `${uri}/docs/${documentId}`;
     
     client.deleteDocument(docLink, function(err, results) {
         if(err) return callback(err);
@@ -101,8 +101,8 @@ export function deleteDocument(documentId, callback) {
 
 // Function queryDatabase
 export function queryDatabase(querySpec) : Promise<any> {
-    var client = documentDB.getClient();
-    var uri = documentDB.getCollectionUri();
+    const client = documentDB.getClient();
+    const uri = documentDB.getCollectionUri();
 
     return new Promise<any>((resolve, reject) => {
         client.queryDocuments(uri, querySpec).toArray(function (err, results) {
@@ -116,4 +116,44 @@ export function queryDatabase(querySpec) : Promise<any> {
             }
         });
     });
+}
+
+// Function queryDatabaseLargeResult
+export function queryDatabaseLargeResult(querySpec) : Promise<any> {
+    const client = documentDB.getClient();
+    const uri = documentDB.getCollectionUri();
+
+    const feedOptions = {
+        maxItemCount: 1000,
+        continuation: "69692275-21c1-42bc-8c41-6314ccde98fc"
+    };
+
+    return new Promise<any>((resolve, reject) => {
+        client.queryDocuments(uri, querySpec, feedOptions).toArray(function (err, results) {
+            if (err || _.isUndefined(results)) {
+                return reject(err);
+            }
+            if (results.length > 0) {
+                resolve(results);
+            } else {
+                resolve([]);
+            }
+        });
+    });
+
+    // return new Promise<any>((resolve, reject) => {
+    //     var bigResults = [];
+
+    //     var queryIterator = client.queryDocuments(uri, querySpec, feedOptions);
+    //     while (queryIterator.hasMoreResults()) {
+    //         queryIterator.executeNext(function (err, docs, headers) {
+    //             if (err) {
+    //                 return reject(err);
+    //             }
+    //             _.concat(bigResults, docs);
+    //         });
+    //     }
+        
+    //     resolve(bigResults);
+    // });
 }

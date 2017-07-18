@@ -1,4 +1,4 @@
-var NodeCache = require("node-cache");
-var _cache = new NodeCache();
+const NodeCache = require("node-cache");
+const _cache = new NodeCache();
 
 module.exports = _cache;

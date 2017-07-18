@@ -38,7 +38,17 @@ router.get('/document/type/:documentType', function(req, res) {
 
     client.queryDocuments(uri, querySpec).toArray(function(err, results) {
         if (results != null && err == null) {
-            res.status(200).json(results);
+            let modifiedResults = [];
+            _.forEach(results, function(doc) {
+                //delete doc._rid;
+                //delete doc._self;
+                //delete doc._etag;
+                //delete doc._attachments;
+                //delete doc._ts;
+                delete doc.password;
+                modifiedResults.push(doc);
+            });
+            res.status(200).json(modifiedResults);
         } else if(_.isNull(results)) {
             res.status(200).json({});   
         } else {
@@ -59,17 +69,17 @@ router.post('/document/query', function(req, res) {
             'value' : 'user',
         }]
     */
-    var params = req.body.parameters;
-    var paramString = '';
-    for (var i = 0; i < params.length; i++) {
-        var param = params[i];
+    let params = req.body.parameters;
+    let paramString = '';
+    for (let i = 0; i < params.length; i++) {
+        const param = params[i];
         paramString += ` d.${param.property} = '${param.value}'`;
         if (i < (params.length - 1)) {
             paramString += ' AND'
         }
     }
 
-    var querySpec = {
+    let querySpec = {
         query : `SELECT * FROM docs d WHERE ${paramString}`,
         options : []
     };
@@ -85,7 +95,7 @@ router.post('/document/query', function(req, res) {
 // POST ../api/document
 router.post('/document', function(req, res) {
     // Validate the model
-    var validModel = true;
+    let validModel = true;
     
     // The docType field is required
     if (!_.has(req.body, 'docType') || _.isNull(req.body.docType))
@@ -98,7 +108,7 @@ router.post('/document', function(req, res) {
 
     documentDB.createDocument(req.body, function(err, created) { 
         if (created != null && created.id != null && err == null) {
-            var data = { "data" : created };
+            const data = {"data": created};
             res.status(200).json(data);
         } else {
             res.status(400).send("document creation failed, something happened. (ERROR: " + err.body + ")");   
@@ -109,8 +119,8 @@ router.post('/document', function(req, res) {
 // PUT ../api/document
 router.put('/document', function(req, res) {
    // Validate the model
-    var validModel = true;
-    
+    let validModel = true;
+
     // The docType field is required
     if (!_.has(req.body, 'docType') || _.isNull(req.body.docType))
         validModel = false;
@@ -126,7 +136,7 @@ router.put('/document', function(req, res) {
     
     documentDB.updateDocument(req.body, function(err, updated) {
         if (updated != null && updated.id != null && err == null) {
-            var data = { "data" : updated };
+            const data = {"data": updated};
             res.status(200).json(data);  
         } else {
             // If the error says that the document wasn't found, default to POST-like behavior by creating a new document
@@ -134,7 +144,7 @@ router.put('/document', function(req, res) {
                 if (err.body === 'Existing document not found.') {
                     documentDB.createDocument(req.body, function(err, created) { 
                         if (created != null && created.id != null && err == null) {
-                            var data = { "data" : created };
+                            const data = {"data": created};
                             res.status(200).json(data);
                             return;
                         } else {
@@ -154,7 +164,7 @@ router.put('/document', function(req, res) {
 // DELETE ../api/document
 router.delete('/document', function(req, res) {
     // Validate the model
-    var validModel = true;
+    let validModel = true;
     
     // The docType field is required
     if (!_.has(req.body, 'docType') || _.isNull(req.body.docType))

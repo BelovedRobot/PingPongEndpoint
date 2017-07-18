@@ -39,7 +39,8 @@ router.use(function (req, res, next) {
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
     
     // Request headers you wish to allow
-    res.setHeader('Access-Control-Allow-Headers', 'x-requested-with,content-type,authorization,origin');
+    res.setHeader('Access-Control-Allow-Headers', 
+    'x-requested-with,content-type,authorization,origin,x-notify,notify-url,x-action');
     
     // // Set to true if you need the website to include cookies in the requests sent
     // // to the API (e.g. in case you use sessions)
@@ -69,10 +70,10 @@ router.use(function(req, res, next) {
     
     // Crude authentication, the token must match
     if (_.has(req.headers, 'authorization')) {
-        var tokenString = req.headers['authorization'];
-        var tokenPrefix = "Token token=";
+        const tokenString = req.headers['authorization'];
+        const tokenPrefix = "Token token=";
         
-        var isAuthorized : boolean = true;
+        let isAuthorized: boolean = true;
         
         // Does the prefix exist
         if (!tokenString.includes(tokenPrefix)) {
@@ -80,8 +81,8 @@ router.use(function(req, res, next) {
         }
         
         // Get Token
-        var prefixLength = tokenPrefix.length;
-        var token : string = tokenString.substring(tokenPrefix.length); 
+        let prefixLength = tokenPrefix.length;
+        const token: string = tokenString.substring(tokenPrefix.length);
 
         if (!_.isEqual(token, "26ae611f-b20d-4c38-8ed6-a9f1b650641c")) {
             isAuthorized = false;

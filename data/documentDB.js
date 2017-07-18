@@ -119,4 +119,40 @@ function queryDatabase(querySpec) {
     });
 }
 exports.queryDatabase = queryDatabase;
+// Function queryDatabaseLargeResult
+function queryDatabaseLargeResult(querySpec) {
+    var client = documentDB.getClient();
+    var uri = documentDB.getCollectionUri();
+    var feedOptions = {
+        maxItemCount: 1000,
+        continuation: "69692275-21c1-42bc-8c41-6314ccde98fc"
+    };
+    return new Promise(function (resolve, reject) {
+        client.queryDocuments(uri, querySpec, feedOptions).toArray(function (err, results) {
+            if (err || _.isUndefined(results)) {
+                return reject(err);
+            }
+            if (results.length > 0) {
+                resolve(results);
+            }
+            else {
+                resolve([]);
+            }
+        });
+    });
+    // return new Promise<any>((resolve, reject) => {
+    //     var bigResults = [];
+    //     var queryIterator = client.queryDocuments(uri, querySpec, feedOptions);
+    //     while (queryIterator.hasMoreResults()) {
+    //         queryIterator.executeNext(function (err, docs, headers) {
+    //             if (err) {
+    //                 return reject(err);
+    //             }
+    //             _.concat(bigResults, docs);
+    //         });
+    //     }
+    //     resolve(bigResults);
+    // });
+}
+exports.queryDatabaseLargeResult = queryDatabaseLargeResult;
 //# sourceMappingURL=documentDB.js.map

@@ -14,9 +14,9 @@ var uploads = multer({
 // POST ../api/app/upload
 router.post('/app/upload', uploads.single('file'), function(req, res) {
     // Set the parameters
-    var contentType = req.file.mimetype;
-    var fileName = req.file.originalname;
-    var path = req.file.path;
+    const contentType = req.file.mimetype;
+    const fileName = req.file.originalname;
+    const path = req.file.path;
 
     // Validate data
     if (!_.has(req.body, 'targetDocument')) {
@@ -24,25 +24,25 @@ router.post('/app/upload', uploads.single('file'), function(req, res) {
         return;
     }
 
-    var targetDoc = JSON.parse(req.body.targetDocument);
+    const targetDoc = JSON.parse(req.body.targetDocument);
 
     // Create the Azure service
-    var blobService = azure.createBlobService(config.blobStorageAccount, config.blobAccessKey)
-                        .withFilter(new azure.ExponentialRetryPolicyFilter());
+    const blobService = azure.createBlobService(config.blobStorageAccount, config.blobAccessKey)
+        .withFilter(new azure.ExponentialRetryPolicyFilter());
 
     // Set the blob options
-    var blobOptions = {
-        contentSettings : {
-            contentType : contentType
-        }, 
-        metadata : {
-            "targetId" : targetDoc.targetId,
-            "targetDocType" : targetDoc.targetDocType,
-            "targetProperty" : targetDoc.targetProperty,
-            "origin" : req.headers.host
+    const blobOptions = {
+        contentSettings: {
+            contentType: contentType
+        },
+        metadata: {
+            "targetId": targetDoc.targetId,
+            "targetDocType": targetDoc.targetDocType,
+            "targetProperty": targetDoc.targetProperty,
+            "origin": req.headers.host
         }
-    }
-    
+    };
+
     // Upload the blob
     blobService.createBlockBlobFromLocalFile(config.blobFileContainer, fileName, path, blobOptions, function (error, result) {
         // Delete the local file
@@ -54,13 +54,13 @@ router.post('/app/upload', uploads.single('file'), function(req, res) {
         }
 
         // Get blob url
-        var blobUrl = `${config.blobEndpoint}${result.name}`;
+        const blobUrl = `${config.blobEndpoint}${result.name}`;
 
         // Update the target doc
         documentDB.getDocument(targetDoc.targetId, function(err, results) { 
             if (results != null && err == null && _.isArray(results)) {
                 // Update the object
-                var target = results[0];
+                let target = results[0];
 
                 // Map to custom logic for instances where we are updating an embedded document or an "object" property 
                 // or if the root object is an array
@@ -84,7 +84,7 @@ router.post('/app/upload', uploads.single('file'), function(req, res) {
                         res.status(200).json(data);
                     } else {
                         // Delete the blob since update failed
-                        var blobName = blobUrl.substr(blobUrl.lastIndexOf('/') + 1);
+                        const blobName = blobUrl.substr(blobUrl.lastIndexOf('/') + 1);
                         blobService.deleteBlobIfExists(config.blobFileContainer, blobName, function (error, result) {
                             console.log("Deleted");
                         });
@@ -107,11 +107,11 @@ router.delete('/app/upload', function(req, res) {
     }
 
     // Set the parameters
-    var fileName = req.body.fileName;
+    const fileName = req.body.fileName;
 
     // Create the Azure service
-    var blobService = azure.createBlobService(config.blobStorageAccount, config.blobAccessKey)
-                        .withFilter(new azure.ExponentialRetryPolicyFilter());
+    const blobService = azure.createBlobService(config.blobStorageAccount, config.blobAccessKey)
+        .withFilter(new azure.ExponentialRetryPolicyFilter());
 
     // Delete the blob
     blobService.deleteBlobIfExists(config.blobFileContainer, fileName, function (error, result) {

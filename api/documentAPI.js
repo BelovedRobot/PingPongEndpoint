@@ -37,7 +37,17 @@ router.get('/document/type/:documentType', function (req, res) {
     var uri = documentDB.getCollectionUri();
     client.queryDocuments(uri, querySpec).toArray(function (err, results) {
         if (results != null && err == null) {
-            res.status(200).json(results);
+            var modifiedResults_1 = [];
+            _.forEach(results, function (doc) {
+                //delete doc._rid;
+                //delete doc._self;
+                //delete doc._etag;
+                //delete doc._attachments;
+                //delete doc._ts;
+                delete doc.password;
+                modifiedResults_1.push(doc);
+            });
+            res.status(200).json(modifiedResults_1);
         }
         else if (_.isNull(results)) {
             res.status(200).json({});
