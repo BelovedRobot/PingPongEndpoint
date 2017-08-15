@@ -118,15 +118,7 @@ router.post('/auth/new', function (req, res) {
             if (error) {
                 return res.status(400).json({ error: "Something happened." });
             }
-            // Send the verification email
-            /* sendVerificationEmail(user.email, req).then(result => {
-                // The user was saved return successful creation code (201)
-                return res.status(201).json({ data: user });
-            }).catch(error => {
-                console.log("There was an error sending to the grid. Error => " + error);
-                // The verification email failed, however that's not a total failure. Go ahead and send success code.
-                return res.status(201).json({ data: user });
-            }); */
+            return res.status(201).json({ data: user });
         });
     }).catch(function (error) {
         return res.status(400).json({ error: "Something happened." });

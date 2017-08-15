@@ -1,5 +1,5 @@
 {
-  "name": "focused-driver-api",
+  "name": "beloved-robot-api",
   "main": "server.js",
   "scripts": {
     "start-dev": "tsc && concurrently \"tsc -w\" \"node server.js\" ",
@@ -37,5 +37,5 @@
     "lite-server": "^2.2.2"
   },
   "engine": "node >= 6.3.0",
-  "description": "An API to support Focused Driver's proprietary app."
+  "description": "An API to support Moultrie Mobile Compatibility Check."
 }

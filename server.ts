@@ -1,9 +1,11 @@
 var express         = require('express');        // call express
 var app             = express();                 // define our app using express
 var bodyParser      = require('body-parser');
-var authAPI         = require('./api/authenticationAPI')
-var uploadAPI       = require('./api/uploadAPI');
-var documentAPI     = require('./api/documentAPI');
+// var authAPI         = require('./api/authenticationAPI')
+// var uploadAPI       = require('./api/uploadAPI');
+// var documentAPI     = require('./api/documentAPI');
+var moultrieCompatibility = require('./api/moultrieCompatibilityAPI')
+
 import _            = require("lodash");
 
 // Server is the backbone, the AppDelegate if you will. All setup here defines our endpoint 
@@ -12,7 +14,7 @@ import _            = require("lodash");
 // ============================================================================= 
 
 // Set our port
-var port = process.env.PORT || 8787;
+var port = process.env.PORT || 8282;
 
 // Configure bodyParser for getting data from a POST
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -84,7 +86,7 @@ router.use(function(req, res, next) {
         let prefixLength = tokenPrefix.length;
         const token: string = tokenString.substring(tokenPrefix.length);
 
-        if (!_.isEqual(token, "26ae611f-b20d-4c38-8ed6-a9f1b650641c")) {
+        if (!_.isEqual(token, "6a07051d-3f64-4cf5-b19d-01a636a74a1c")) {
             isAuthorized = false;
         }
         
@@ -101,9 +103,10 @@ router.use(function(req, res, next) {
 });
 
 // Additional Routes
-app.use('/api', uploadAPI);
-app.use('/api', authAPI);
-app.use('/api', documentAPI);
+// app.use('/api', uploadAPI);
+// app.use('/api', authAPI);
+// app.use('/api', documentAPI);
+app.use('/api', moultrieCompatibility);
 
 // Start the Server
 // =============================================================================
