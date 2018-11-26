@@ -6,12 +6,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const documentAPI_1 = __importDefault(require("./api/documentAPI"));
 const lodash_1 = __importDefault(require("lodash"));
+const body_parser_1 = __importDefault(require("body-parser"));
 var app = express_1.default();
 // Server is the backbone, the AppDelegate if you will. All setup here defines our endpoint 
 // Endpoint Configuration
 // ============================================================================= 
 // Set our port
 var port = process.env.PORT || 8282;
+// Configure bodyParser for getting data from a POST
+app.use(body_parser_1.default.urlencoded({ extended: true }));
+app.use(body_parser_1.default.json());
 // Route Configuration
 // =============================================================================
 var router = express_1.default.Router();

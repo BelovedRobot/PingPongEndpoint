@@ -1,193 +1,112 @@
 import express from 'express';
 import _ from 'lodash';
+import * as cache from '../data/node_cache';
 
 var router = express.Router();
 
 // GET ../api/document/:documentId
-router.get('/document/:documentId', function(req, res) {
-    // var documentId = req.params.documentId;
+router.get('/document/:documentId', function(req, res, next) {
+    if (!_.has(req.params, 'documentId')) {
+        return res.status(400).send("Document Id is required");
+    }
+
+    var documentId = req.params.documentId;
+
+    // Check for all route, if so we skip
+    if (documentId == "all") {
+        return next();
+    }
     
-    // documentDB.getDocument(documentId, function(err, results) { 
-    //     if (results != null && err == null) {
-    //         if (results.length > 0) {
-    //             res.status(200).json(results[0]);
-    //         } else {
-    //             res.status(200).json({});
-    //         }
-    //     } else if(_.isNull(results)) {
-    //         res.status(200).json({});   
-    //     } else {
-    //         res.status(400).send("document retrieval failed, something happened. (ERROR: " + err + ")");
-    //     }
-    // })
-});
+    let value = cache.getObject(documentId);
 
-// GET ../api/document/type/:documentType
-router.get('/document/type/:documentType', function(req, res) {
-    // var documentType = req.params.documentType;
+    if (value === undefined) {
+        return res.status(404).send("Document not found");
+    }
 
-    // // Get all tickets then parse
-    // var querySpec = {
-    //     query: `SELECT * FROM documents d WHERE d.docType = '${documentType}'`,
-    //     parameters: []
-    // };
-
-    // var client = documentDB.getClient();
-    // var uri = documentDB.getCollectionUri();
-
-    // client.queryDocuments(uri, querySpec).toArray(function(err, results) {
-    //     if (results != null && err == null) {
-    //         let modifiedResults = [];
-    //         _.forEach(results, function(doc) {
-    //             //delete doc._rid;
-    //             //delete doc._self;
-    //             //delete doc._etag;
-    //             //delete doc._attachments;
-    //             //delete doc._ts;
-    //             delete doc.password;
-    //             modifiedResults.push(doc);
-    //         });
-    //         res.status(200).json(modifiedResults);
-    //     } else if(_.isNull(results)) {
-    //         res.status(200).json({});   
-    //     } else {
-    //         res.status(400).send("document retrieval failed, something happened. (ERROR: " + err + ")");
-    //     }
-    // });
-});
-
-// POST ../api/document/query
-router.post('/document/query', function(req, res) {
-    // // The parameters field is required
-    // if (!_.has(req.body, 'parameters') || _.isNull(req.body.parameters) || !_.isArray(req.body.parameters)) {
-    //     return res.status(400).json({ error : "documents cannot be queried. you must provide parameters."});
-    // }
-    // /*
-    //     parameters : [{
-    //         'property' : 'docType',
-    //         'value' : 'user',
-    //     }]
-    // */
-    // let params = req.body.parameters;
-    // let paramString = '';
-    // for (let i = 0; i < params.length; i++) {
-    //     const param = params[i];
-    //     paramString += ` d.${param.property} = '${param.value}'`;
-    //     if (i < (params.length - 1)) {
-    //         paramString += ' AND'
-    //     }
-    // }
-
-    // let querySpec = {
-    //     query : `SELECT * FROM docs d WHERE ${paramString}`,
-    //     options : []
-    // };
-
-    // documentDB.queryDatabase(querySpec).then(results => {
-    //     return res.status(200).json(results);
-    // }).catch(error => {
-    //     console.log("Error processing query. " + error);
-    //     return res.status(400).json({ error : "There was a problem with your request."});
-    // });
+    return res.status(200).json(value);
 });
 
 // POST ../api/document
 router.post('/document', function(req, res) {
-    // // Validate the model
-    // let validModel = true;
+    // Validate the model
+    let validModel = true;
     
-    // // The docType field is required
-    // if (!_.has(req.body, 'docType') || _.isNull(req.body.docType))
-    //     validModel = false;
+    // The docType & id fields are required
+    if (!_.has(req.body, 'docType') || _.isNull(req.body.docType) || !_.has(req.body, 'id') || _.isNull(req.body.id))
+        validModel = false;
     
-    // if (!validModel) {
-    //     res.status(400).send("document can not be created. property docType is required.");
-    //     return;
-    // }
+    if (!validModel) {
+        return res.status(400).send("Document can not be created. Properties docType & id are required.");
+    }
 
-    // documentDB.createDocument(req.body, function(err, created) { 
-    //     if (created != null && created.id != null && err == null) {
-    //         const data = {"data": created};
-    //         res.status(200).json(data);
-    //     } else {
-    //         res.status(400).send("document creation failed, something happened. (ERROR: " + err.body + ")");   
-    //     }
-    // })
+    // Save the document
+    let result = cache.storeObject(req.body);
+
+    if (result) {
+        return res.status(200).send("Success");
+    } else {
+        return res.status(500).send("Oh shit");
+    }
 });
 
 // PUT ../api/document
 router.put('/document', function(req, res) {
-   // // Validate the model
-   //  let validModel = true;
+    if (!_.has(req.params, 'documentId')) {
+        return res.status(400).send("Document Id is required");
+    }
 
-   //  // The docType field is required
-   //  if (!_.has(req.body, 'docType') || _.isNull(req.body.docType))
-   //      validModel = false;
+    var documentId = req.params.documentId;
+
+    // Validate the model
+    let validModel = true;
+
+    // The docType & id fields are required
+    if (!_.has(req.body, 'docType') || _.isNull(req.body.docType) || !_.has(req.body, 'id') || _.isNull(req.body.id))
+        validModel = false;
         
-   //  // The id field is required
-   //  if (!_.has(req.body, 'id') || _.isNull(req.body.id)) 
-   //      validModel = false;
-        
-   //  if (!validModel) {
-   //      res.status(400).send("document cannot be updated. your model is a dud.");
-   //      return;
-   //  }
+    if (!validModel) 
+        return res.status(400).send("Document can not be created. Properties docType & id are required.");
+
+    // First ensure the document exists
+    let existingObject = cache.getObject(documentId);
+
+    if (existingObject === undefined) {
+        return res.status(404).send("Document not found");
+    }
     
-   //  documentDB.updateDocument(req.body, function(err, updated) {
-   //      if (updated != null && updated.id != null && err == null) {
-   //          const data = {"data": updated};
-   //          res.status(200).json(data);  
-   //      } else {
-   //          // If the error says that the document wasn't found, default to POST-like behavior by creating a new document
-   //          if (_.has(err, 'body')) {
-   //              if (err.body === 'Existing document not found.') {
-   //                  documentDB.createDocument(req.body, function(err, created) { 
-   //                      if (created != null && created.id != null && err == null) {
-   //                          const data = {"data": created};
-   //                          res.status(200).json(data);
-   //                          return;
-   //                      } else {
-   //                          res.status(400).send("document creation failed, something happened. (ERROR: " + err.body + ")");
-   //                          return;   
-   //                      }
-   //                  })
-   //              }
-   //          } else {
-   //              console.log(err);
-   //              res.status(400).send("document update failed, something happened. (ERROR: " + err.body + ")");
-   //          }
-   //      }
-   //  }) 
+    // Save the document
+    let result = cache.storeObject(req.body);
+
+    if (result) {
+        return res.status(200).send("Success");
+    } else {
+        return res.status(500).send("Oh shit");
+    }
 });
 
-// DELETE ../api/document
-router.delete('/document', function(req, res) {
-    // // Validate the model
-    // let validModel = true;
+// DELETE ../api/document/documentId
+router.delete('/document/:documentId', function(req, res) {
+    if (!_.has(req.params, 'documentId')) {
+        return res.status(400).send("Document Id is required");
+    }
+
+    var documentId = req.params.documentId;
     
-    // // The docType field is required
-    // if (!_.has(req.body, 'docType') || _.isNull(req.body.docType))
-    //     validModel = false;
-
-    // // The id field is required
-    // if (!_.has(req.body, 'id') || _.isNull(req.body.id))
-    //     validModel = false;
+    // Perform the delete
+    let result = cache.deleteObject(documentId);
     
-    // if (!validModel) {
-    //     return res.status(400).send("document cannot be deleted.");
-    // }
+    if (result) {
+        return res.status(200).send("Success");
+    } else {
+        return res.status(500).send("Oh shit");
+    }
+});
 
-    // // Create the URL
-    // // var docLink = `${config.endpoint}/${config.collectionDefinition}/docs/${req.body.id}`;
+// GET ../api/document/all
+router.get('/document/all', function(req, res) {
+    let result = cache.getAllObjects();
 
-    // // Perform the delete
-    // documentDB.deleteDocument(req.body.id, function(err, result) {
-    //     if (err) {
-    //         return res.status(400).send("document deletion failed, something happened. (ERROR: " + err.body + ")");
-    //     } else {
-    //         return res.status(200).send({});
-    //     }
-    // });
+    return res.status(200).json(result);
 });
 
 export default router;

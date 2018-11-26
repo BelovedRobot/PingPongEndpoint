@@ -1,6 +1,7 @@
 import express from "express";
 import documentAPI from "./api/documentAPI";
 import _ from "lodash";
+import bodyParser from 'body-parser';
 
 var app = express();
 // Server is the backbone, the AppDelegate if you will. All setup here defines our endpoint 
@@ -10,6 +11,10 @@ var app = express();
 
 // Set our port
 var port = process.env.PORT || 8282;
+
+// Configure bodyParser for getting data from a POST
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
 // Route Configuration
 // =============================================================================
@@ -78,7 +83,7 @@ router.use(function(req, res, next) {
         console.log("No header");
         return res.status(401).send('Not Authorized');
     }
-    console.log("Auth success");
+
     next(); // make sure we go to the next routes and don't stop here
 });
 
