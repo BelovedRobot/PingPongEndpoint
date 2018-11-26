@@ -1,24 +1,20 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-var express = require('express'); // call express
-var app = express(); // define our app using express
-var bodyParser = require('body-parser');
-// var authAPI         = require('./api/authenticationAPI')
-// var uploadAPI       = require('./api/uploadAPI');
-// var documentAPI     = require('./api/documentAPI');
-var moultrieCompatibility = require('./api/moultrieCompatibilityAPI');
-var _ = require("lodash");
+const express_1 = __importDefault(require("express"));
+const documentAPI_1 = __importDefault(require("./api/documentAPI"));
+const lodash_1 = __importDefault(require("lodash"));
+var app = express_1.default();
 // Server is the backbone, the AppDelegate if you will. All setup here defines our endpoint 
 // Endpoint Configuration
 // ============================================================================= 
 // Set our port
 var port = process.env.PORT || 8282;
-// Configure bodyParser for getting data from a POST
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
 // Route Configuration
 // =============================================================================
-var router = express.Router();
+var router = express_1.default.Router();
 // Configure the /api prefix to all routes
 app.use('/api', router);
 // Configure a test route to make sure everything is working (accessed at GET http://localhost:8484/api)
@@ -42,30 +38,21 @@ router.use(function (req, res, next) {
     }
     next(); // make sure we go to the next routes and don't stop here
 });
-var authFreeRoutes = [];
 // Optional to add a piece of middleware to use for all requests
 router.use(function (req, res, next) {
-    // Skip authentication middle-ware for certain routes
-    var exceptionIndex = _.findIndex(authFreeRoutes, function (route) {
-        return _.startsWith(req.originalUrl, route);
-    });
-    if (exceptionIndex > -1) {
-        next();
-        return;
-    }
-    // Crude authentication, the token must match
-    if (_.has(req.headers, 'authorization')) {
-        var tokenString = req.headers['authorization'];
-        var tokenPrefix = "Token token=";
-        var isAuthorized = true;
+    // Crude authentication, the token must be present
+    if (lodash_1.default.has(req.headers, 'authorization')) {
+        const tokenString = req.headers['authorization'];
+        const tokenPrefix = "Token token=";
+        let isAuthorized = true;
         // Does the prefix exist
         if (!tokenString.includes(tokenPrefix)) {
             isAuthorized = false;
         }
         // Get Token
-        var prefixLength = tokenPrefix.length;
-        var token = tokenString.substring(tokenPrefix.length);
-        if (!_.isEqual(token, "6a07051d-3f64-4cf5-b19d-01a636a74a1c")) {
+        let prefixLength = tokenPrefix.length;
+        const token = tokenString.substring(tokenPrefix.length);
+        if (token.length <= 0) {
             isAuthorized = false;
         }
         if (!isAuthorized) {
@@ -81,10 +68,7 @@ router.use(function (req, res, next) {
     next(); // make sure we go to the next routes and don't stop here
 });
 // Additional Routes
-// app.use('/api', uploadAPI);
-// app.use('/api', authAPI);
-// app.use('/api', documentAPI);
-app.use('/api', moultrieCompatibility);
+app.use('/api', documentAPI_1.default);
 // Start the Server
 // =============================================================================
 app.listen(port);
