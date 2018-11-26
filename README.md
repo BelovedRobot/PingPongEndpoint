@@ -1,15 +1,20 @@
-# Standard Node Endpoint for PingPong Support by Beloved Robot
+# Testing Node Endpoint for PingPong Support by Beloved Robot
 
+This project will create a simple API that the tests inside PingPong are configured to run against. The data is stored in memory on the node process, therefore this is strictly for local development and testing. However this application can be used as a base application for PingPong assuming the user will replace the data layer with a legitimate method of storage.
+
+### Requirements
+1. Must have node.js installed (developed with node v10.13.0 and npm v6.4.1)
+
+### Running the server
 1. Clone the repo
 
-2. Depending on your dev environment you will need to install these type definitions
-	- sudo typings install dt~lodash --save --global
-	- sudo typings install dt~moment --save --global
-	- sudo typings install dt~serve-static --save --global
-	- sudo typings install dt~express-serve-static-core --save --global
-	- sudo typings install dt~express --save --global
-	- sudo typings install dt~node --save --global
-	- sudo typings install dt~moment-node --save --global
-	- sudo typings install dt~mime --save --global
+2. Run ```npm install```
 
-3. In ../api/authenticationAPI.ts update the AES key and iv value with your own keys
+3. Run ```npm run start```
+
+4. Default endpoints are: 
+	POST localhost:8282/api/document
+	PUT localhost:8282/api/document/:id
+	GET localhost:8282/api/document/:id
+	DELETE localhost:8282/api/document/:id
+	GET localhost:8282/api/document/all (returns all documents in cache)

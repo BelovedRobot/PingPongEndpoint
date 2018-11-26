@@ -68,7 +68,6 @@ router.use(function (req, res, next) {
         console.log("No header");
         return res.status(401).send('Not Authorized');
     }
-    console.log("Auth success");
     next(); // make sure we go to the next routes and don't stop here
 });
 // Additional Routes
