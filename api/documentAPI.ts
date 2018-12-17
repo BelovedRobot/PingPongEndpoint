@@ -39,6 +39,12 @@ router.post('/document', function(req, res) {
         return res.status(400).send("Document can not be created. Properties docType & id are required.");
     }
 
+    // Check if the document already exists
+    let value = cache.getObject(req.body.id)
+    if (value === undefined) {
+        return res.status(404).send("Document already exists");
+    }
+
     // Save the document
     let result = cache.storeObject(req.body);
 

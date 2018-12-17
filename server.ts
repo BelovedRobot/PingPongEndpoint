@@ -83,7 +83,7 @@ router.use(function(req, res, next) {
         console.log("No header");
         return res.status(401).send('Not Authorized');
     }
-
+    
     next(); // make sure we go to the next routes and don't stop here
 });
 

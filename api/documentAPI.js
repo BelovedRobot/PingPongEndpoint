@@ -34,11 +34,17 @@ router.get('/document/:documentId', function (req, res, next) {
 router.post('/document', function (req, res) {
     // Validate the model
     let validModel = true;
+    console.log(req.body);
     // The docType & id fields are required
     if (!lodash_1.default.has(req.body, 'docType') || lodash_1.default.isNull(req.body.docType) || !lodash_1.default.has(req.body, 'id') || lodash_1.default.isNull(req.body.id))
         validModel = false;
     if (!validModel) {
         return res.status(400).send("Document can not be created. Properties docType & id are required.");
+    }
+    // Check if the document already exists
+    let value = cache.getObject(req.body.id);
+    if (value === undefined) {
+        return res.status(404).send("Document already exists");
     }
     // Save the document
     let result = cache.storeObject(req.body);
