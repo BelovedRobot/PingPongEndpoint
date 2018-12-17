@@ -7,14 +7,12 @@ This project will create a simple API that the tests inside PingPong are configu
 
 ### Running the server
 1. Clone the repo
-
 2. Run ```npm install```
-
 3. Run ```npm run start```
 
-4. Default endpoints are: 
-	POST localhost:8282/api/document
-	PUT localhost:8282/api/document/:id
-	GET localhost:8282/api/document/:id
-	DELETE localhost:8282/api/document/:id
-	GET localhost:8282/api/document/all (returns all documents in cache)
+### Default endpoints
+- POST localhost:8282/api/document
+- PUT localhost:8282/api/document/:id
+- GET localhost:8282/api/document/:id
+- DELETE localhost:8282/api/document/:id
+- GET localhost:8282/api/document/all (returns all documents in cache)
